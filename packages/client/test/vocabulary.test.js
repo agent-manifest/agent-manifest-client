@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { sep } from 'node:path';
 
 /**
  * Mechanism 2 — vocabulary blocking, checked by CI.
@@ -85,7 +86,9 @@ test('source files export nothing whose name matches the forbidden vocabulary', 
   // Belt and braces: the dynamic scan above cannot see an export that is added
   // to a module the entry points do not re-export. This one reads the text.
   const srcDir = fileURLToPath(new URL('../src/', import.meta.url));
-  const files = (await readdir(srcDir, { recursive: true })).filter((f) => f.endsWith('.js'));
+  const files = (await readdir(srcDir, { recursive: true }))
+    .map((entry) => entry.split(sep).join('/'))
+    .filter((f) => f.endsWith('.js'));
   assert.ok(files.length >= 7, 'expected the source tree to be found');
 
   const offending = [];

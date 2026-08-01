@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
+import { sep } from 'node:path';
 
 /**
  * Mechanism 1 — the dependency direction is structural, not editorial.
@@ -16,7 +17,10 @@ const SRC = new URL('../src/', import.meta.url);
 
 async function sourceFiles() {
   const dir = fileURLToPath(SRC);
-  return (await readdir(dir, { recursive: true })).filter((f) => f.endsWith('.js'));
+  // readdir returns platform separators; every path in this file is a URL path.
+  return (await readdir(dir, { recursive: true }))
+    .map((entry) => entry.split(sep).join('/'))
+    .filter((f) => f.endsWith('.js'));
 }
 
 async function read(file) {
