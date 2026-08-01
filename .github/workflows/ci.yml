@@ -110,10 +110,18 @@ jobs:
         with:
           node-version: '24'
       - run: npm ci
+      - name: Confirm the reference consumer can never be published by accident
+        run: |
+          set -euo pipefail
+          private=$(node -e "process.stdout.write(String(require('./packages/reachability/package.json').private))")
+          test "$private" = "true"
+
+      # Only the two publishable packages. The reference consumer is private and
+      # is deliberately not part of what a third party would install.
       - name: Build both tarballs and record their contents
         run: |
           set -euo pipefail
-          npm pack --workspaces
+          npm pack -w @agent-manifest/schema -w @agent-manifest/client
           for tarball in ./*.tgz; do
             echo "--- $tarball"
             tar -tzf "$tarball" | sort
