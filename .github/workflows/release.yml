@@ -1,0 +1,190 @@
+name: Release
+
+# Manual only. This workflow cannot be triggered by a push, a tag, a pull
+# request, or a schedule: publication is a human decision, taken once, on a
+# commit that has already passed CI.
+#
+# It publishes ONE package per dispatch. Two packages means two dispatches, two
+# approvals and two checksums typed by hand — the alternative, publishing both
+# from a single approval, would halve the number of moments a human looks at
+# what is about to become public.
+#
+# It is inert until all of the following exist:
+#   - the `npm-publish` environment in this repository, with required reviewers;
+#   - a trusted publisher configured on npmjs.com for the package being
+#     published, pointing at this repository, this workflow file and that
+#     environment;
+#   - an explicit `confirm: publish` input at dispatch time;
+#   - the sha-256 of the approved tarball, typed at dispatch time.
+#
+# Authentication is OpenID Connect (npm trusted publishing). There is no npm
+# token in this repository and none is read here. Provenance is attested by npm
+# from the OIDC claim, so the published package is traceable to this commit.
+# These two properties are described in public in STEWARDSHIP.md section 3 of
+# the `agent-manifest` repository; a change here makes that description false
+# and has to be made there too.
+#
+# The workflow publishes the exact tarball it built, after checking that its
+# sha-256 equals the value approved by hand. If the build is not reproducible,
+# it stops rather than publish an artefact nobody reviewed.
+#
+# It does not create tags, releases, or commits. Those are made by hand
+# beforehand, and the tag is what this workflow is dispatched against.
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Which package to publish.'
+        required: true
+        type: choice
+        options:
+          - '@agent-manifest/schema'
+          - '@agent-manifest/client'
+      confirm:
+        description: 'Type "publish" to confirm. Anything else aborts.'
+        required: true
+        default: 'no'
+      sha256:
+        description: 'sha-256 of the approved tarball. A mismatch aborts.'
+        required: true
+      tag:
+        description: 'npm dist-tag to publish under.'
+        required: true
+        default: 'latest'
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm-publish
+    permissions:
+      contents: read
+      id-token: write # OIDC: trusted publishing and provenance
+    steps:
+      - name: Refuse an unconfirmed dispatch
+        if: ${{ inputs.confirm != 'publish' }}
+        run: |
+          echo "Dispatch not confirmed; nothing published."
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing requires npm 11.5.1 or later.
+      - name: Use an npm release that supports trusted publishing
+        run: |
+          npm install -g npm@latest
+          npm --version
+
+      - run: npm ci
+
+      - name: Verify before publishing
+        run: npm test
+
+      # The vendored schema is a byte-for-byte copy of the canonical file, and
+      # v1.0 is frozen. A mismatch here is drift, and drift must not be
+      # published under any circumstances.
+      - name: Schema parity with the published canonical file
+        run: |
+          set -euo pipefail
+          recorded=$(python3 -c "import json;print(json.load(open('packages/schema/SOURCE.json'))['sha256'])")
+          canonical_url=$(python3 -c "import json;print(json.load(open('packages/schema/SOURCE.json'))['canonical_url'])")
+          local_sum=$(sha256sum packages/schema/v1.0/schema.json | cut -d' ' -f1)
+          curl -sSfL "$canonical_url" -o canonical.json
+          published_sum=$(sha256sum canonical.json | cut -d' ' -f1)
+          rm -f canonical.json
+          echo "recorded:  $recorded"
+          echo "vendored:  $local_sum"
+          echo "published: $published_sum"
+          test "$local_sum" = "$recorded"
+          test "$published_sum" = "$recorded"
+
+      - name: Read the version being published
+        id: version
+        run: |
+          set -euo pipefail
+          version=$(npm pkg get version -w "${{ inputs.package }}" \
+            | python3 -c "import json,sys;print(next(iter(json.load(sys.stdin).values())))")
+          echo "value=$version" >> "$GITHUB_OUTPUT"
+          echo "Publishing ${{ inputs.package }}@$version"
+
+      # @agent-manifest/client declares an exact dependency on
+      # @agent-manifest/schema. Publishing the client first would put a package
+      # in the registry that cannot be installed, which is worse than not
+      # publishing it at all.
+      - name: Refuse to publish the client before its dependency exists
+        if: ${{ inputs.package == '@agent-manifest/client' }}
+        run: |
+          set -euo pipefail
+          required=$(python3 -c "import json;print(json.load(open('packages/client/package.json'))['dependencies']['@agent-manifest/schema'])")
+          echo "client requires @agent-manifest/schema@$required"
+          npm view "@agent-manifest/schema@$required" version
+
+      - name: Check that the tag matches the version being published
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.value }}"
+          short=$(printf '%s' "${{ inputs.package }}" | cut -d/ -f2)
+          ref="${GITHUB_REF#refs/tags/}"
+          if [ "$GITHUB_REF" != "$ref" ] && [ "$ref" != "$short-v$version" ]; then
+            echo "Dispatched against $ref but expected $short-v$version."
+            exit 1
+          fi
+
+      - name: Build the tarball and check it against the approved checksum
+        id: pack
+        run: |
+          set -euo pipefail
+          file=$(npm pack -w "${{ inputs.package }}" --silent)
+          echo "file=$file" >> "$GITHUB_OUTPUT"
+          echo "Contents:"
+          tar -tzf "$file" | sort
+          actual=$(sha256sum "$file" | cut -d' ' -f1)
+          echo "approved: ${{ inputs.sha256 }}"
+          echo "built:    $actual"
+          if [ "$actual" != "${{ inputs.sha256 }}" ]; then
+            echo "The tarball does not match the approved checksum; nothing published."
+            exit 1
+          fi
+
+      - name: Publish the approved tarball
+        run: npm publish "${{ steps.pack.outputs.file }}" --provenance --tag "${{ inputs.tag }}"
+
+      # A release that cannot be installed by a stranger is a broken release,
+      # and the only way to know is to be the stranger.
+      - name: Verify the published package installs from the registry
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.value }}"
+          dir=$(mktemp -d)
+          cd "$dir"
+          npm init -y >/dev/null
+          npm pkg set type=module >/dev/null
+          npm install "${{ inputs.package }}@$version"
+          if [ "${{ inputs.package }}" = "@agent-manifest/schema" ]; then
+            node -e "
+              import('@agent-manifest/schema').then(async (m) => {
+                if (m.schemaV1_0.\$id === undefined) throw new Error('no \$id');
+                if (m.schemaFor('9.9') !== null) throw new Error('unknown version must be null');
+                console.log('schema ok:', m.SCHEMA_VERSIONS.join(', '));
+              });
+            "
+          else
+            node -e "
+              import('@agent-manifest/client').then(async (m) => {
+                const { document } = m.parse('{\"manifest_version\":\"1.0\"}');
+                if (m.detectVersion(document) !== '1.0') throw new Error('version not detected');
+                const fp = await m.fingerprint(document);
+                if (!fp.startsWith('sha256:')) throw new Error('no fingerprint');
+                if (m.CAVEATS.length < 4) throw new Error('caveats missing');
+                console.log('client ok:', fp);
+              });
+            "
+          fi
