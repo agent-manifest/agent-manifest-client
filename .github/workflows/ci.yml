@@ -109,11 +109,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
+      # The release workflow upgrades npm before packing, because trusted
+      # publishing needs 11.5.1 or later. `npm pack` is not byte-identical
+      # across npm versions, so this job has to pack under the same npm or the
+      # checksum recorded here would never match the one built at publish time.
+      - name: Use the same npm release the publish workflow uses
+        run: npm install -g npm@latest
       - run: npm ci
       - name: Confirm the reference consumer can never be published by accident
         run: |
           set -euo pipefail
-          private=$(node -e "process.stdout.write(String(require('./packages/reachability/package.json').private))")
+          private=$(python3 -c "import json;print(str(json.load(open('packages/reachability/package.json')).get('private')).lower())")
           test "$private" = "true"
 
       # Only the two publishable packages. The reference consumer is private and
