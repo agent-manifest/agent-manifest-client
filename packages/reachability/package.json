@@ -1,0 +1,24 @@
+{
+  "name": "@agent-manifest/reachability",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reference consumer of @agent-manifest/client. Produces a reachability report over a declared set of origins. Not a directory, not a ranking, not a compliance status. Not published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "bin": {
+    "agent-manifest-reachability": "bin/reachability.js"
+  },
+  "exports": {
+    ".": "./src/report.js"
+  },
+  "scripts": {
+    "test": "node --test",
+    "report": "node bin/reachability.js"
+  },
+  "dependencies": {
+    "@agent-manifest/client": "0.1.0"
+  }
+}

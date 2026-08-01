@@ -58,6 +58,9 @@ jobs:
       - name: Conformance corpus
         run: node --test packages/client/test/corpus.test.js
 
+      - name: Reference consumer — written scope, including the sweep that does not exist
+        run: node --test packages/reachability/test/report.test.js
+
   live:
     name: access layer against what is actually served
     runs-on: ubuntu-latest

@@ -10,10 +10,12 @@
   },
   "workspaces": [
     "packages/schema",
-    "packages/client"
+    "packages/client",
+    "packages/reachability"
   ],
   "scripts": {
-    "test": "node --test \"packages/client/test/**/*.test.js\"",
-    "check:packages": "npm pack --dry-run --workspaces"
+    "test": "node --test \"packages/*/test/**/*.test.js\"",
+    "check:packages": "npm pack --dry-run --workspaces",
+    "report": "node packages/reachability/bin/reachability.js"
   }
 }
