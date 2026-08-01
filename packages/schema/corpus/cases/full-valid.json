@@ -1,0 +1,64 @@
+{
+  "manifest_version": "1.0",
+  "agent_id": "example.full-agent",
+  "agent_name": "Full Example Agent",
+  "agent_version": "1.2.3",
+  "owner": {
+    "type": "organization",
+    "identifier": "Example Organization, Inc."
+  },
+  "purpose": {
+    "primary_code": "customer-support",
+    "description": "Handle tier-1 customer support across billing and account questions."
+  },
+  "capabilities": [
+    "answer_faq",
+    "create_support_ticket"
+  ],
+  "forbidden_actions": [
+    "never issue refunds",
+    "never modify account credentials",
+    "never contact users outside approved support channels"
+  ],
+  "autonomy": {
+    "level": 2
+  },
+  "risk_profile": {
+    "level": "medium",
+    "notes": "May access account metadata; does not perform financial transactions."
+  },
+  "data_handling": {
+    "stores_personal_data": true,
+    "retention": "P30D"
+  },
+  "stopping_authority": {
+    "stoppable_by": [
+      "operator",
+      "account-owner"
+    ],
+    "mechanism": "admin kill switch and API token revocation",
+    "stages": [
+      "pre-execution",
+      "mid-execution"
+    ]
+  },
+  "audit_surface": {
+    "logging": "detailed",
+    "reconstructability": "full",
+    "opacity_declared": false,
+    "notes": "All tool calls and model decisions are logged with correlation IDs."
+  },
+  "contact": {
+    "email": "support-governance@example.com"
+  },
+  "language": {
+    "primary": "en",
+    "supported": [
+      "en",
+      "es"
+    ]
+  },
+  "extensions": {
+    "x-internal-team": "trust-and-safety"
+  }
+}

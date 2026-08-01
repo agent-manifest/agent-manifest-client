@@ -1,0 +1,222 @@
+{
+  "corpus_version": "1.0",
+  "schema_version": "1.0",
+  "generated_from": "https://agent-manifest-spec.org/spec/v1.0/schema.json",
+  "what_this_is": "Test material for structural validation of Agent Manifest v1.0 documents, published as data so that an implementation in any language can check that it agrees with this one.",
+  "what_this_is_not": "Not a conformance programme. There is no seal, no list of who passed, no register of results, and nobody is told how an implementation did. Whoever runs the corpus knows their own result; the project does not learn it and does not want to.",
+  "field_meaning": {
+    "schema_valid": "Whether a format-aware JSON Schema 2020-12 validator, with the email format assertion enabled, reports the document as structurally valid against the v1.0 schema. It says nothing about the agent the document describes."
+  },
+  "cases": [
+    {
+      "id": "minimal-valid",
+      "file": "cases/minimal-valid.json",
+      "schema_valid": true,
+      "note": "Every required property present, no optional property used."
+    },
+    {
+      "id": "full-valid",
+      "file": "cases/full-valid.json",
+      "schema_valid": true,
+      "note": "Every optional property exercised, including extensions and language."
+    },
+    {
+      "id": "retention-none",
+      "file": "cases/retention-none.json",
+      "schema_valid": true,
+      "note": "stores_personal_data true satisfied by the 'none' enum value."
+    },
+    {
+      "id": "retention-temporary-session-only",
+      "file": "cases/retention-temporary-session-only.json",
+      "schema_valid": true,
+      "note": "The second enum value permitted for retention."
+    },
+    {
+      "id": "retention-iso8601-duration",
+      "file": "cases/retention-iso8601-duration.json",
+      "schema_valid": true,
+      "note": "An ISO 8601 duration is the third permitted form of retention."
+    },
+    {
+      "id": "retention-present-without-storage",
+      "file": "cases/retention-present-without-storage.json",
+      "schema_valid": true,
+      "note": "Retention may be declared even when nothing is stored; the conditional only makes it required."
+    },
+    {
+      "id": "extensions-container",
+      "file": "cases/extensions-container.json",
+      "schema_valid": true,
+      "note": "The extensions container accepts arbitrary members."
+    },
+    {
+      "id": "extensions-x-prefix",
+      "file": "cases/extensions-x-prefix.json",
+      "schema_valid": true,
+      "note": "Root-level x- keys are the alternative extensibility convention for v1.0."
+    },
+    {
+      "id": "unknown-root-property",
+      "file": "cases/unknown-root-property.json",
+      "schema_valid": true,
+      "note": "additionalProperties is true at the root: an unknown property does not make a document structurally invalid."
+    },
+    {
+      "id": "autonomy-level-upper-bound",
+      "file": "cases/autonomy-level-upper-bound.json",
+      "schema_valid": true,
+      "note": "Autonomy level 3 is the declared maximum."
+    },
+    {
+      "id": "capabilities-declared",
+      "file": "cases/capabilities-declared.json",
+      "schema_valid": true,
+      "note": "Optional capabilities array with one member."
+    },
+    {
+      "id": "language-declared",
+      "file": "cases/language-declared.json",
+      "schema_valid": true,
+      "note": "Optional language declaration."
+    },
+    {
+      "id": "stopping-stages-declared",
+      "file": "cases/stopping-stages-declared.json",
+      "schema_valid": true,
+      "note": "Optional stopping stages from the declared enum."
+    },
+    {
+      "id": "audit-opacity-declared",
+      "file": "cases/audit-opacity-declared.json",
+      "schema_valid": true,
+      "note": "A document may declare that it is not reconstructable; that is a valid declaration, not a defect."
+    },
+    {
+      "id": "missing-agent-id",
+      "file": "cases/missing-agent-id.json",
+      "schema_valid": false,
+      "note": "A required property is absent."
+    },
+    {
+      "id": "missing-contact",
+      "file": "cases/missing-contact.json",
+      "schema_valid": false,
+      "note": "A required object property is absent."
+    },
+    {
+      "id": "manifest-version-not-1-0",
+      "file": "cases/manifest-version-not-1-0.json",
+      "schema_valid": false,
+      "note": "manifest_version is a const in v1.0; any other value is a document this schema does not describe."
+    },
+    {
+      "id": "retention-freeform-label",
+      "file": "cases/retention-freeform-label.json",
+      "schema_valid": false,
+      "note": "The documented divergence case: a freeform label is not one of the two enum values and does not match the ISO 8601 pattern."
+    },
+    {
+      "id": "retention-freeform-years",
+      "file": "cases/retention-freeform-years.json",
+      "schema_valid": false,
+      "note": "Second freeform label, same class as the case above."
+    },
+    {
+      "id": "retention-required-when-storing",
+      "file": "cases/retention-required-when-storing.json",
+      "schema_valid": false,
+      "note": "The single conditional in the schema: storing personal data makes retention required."
+    },
+    {
+      "id": "agent-id-pattern",
+      "file": "cases/agent-id-pattern.json",
+      "schema_valid": false,
+      "note": "agent_id must match ^[a-zA-Z0-9._-]+$; spaces and punctuation are outside it."
+    },
+    {
+      "id": "agent-id-too-short",
+      "file": "cases/agent-id-too-short.json",
+      "schema_valid": false,
+      "note": "agent_id has a minimum length of 3."
+    },
+    {
+      "id": "autonomy-level-out-of-range",
+      "file": "cases/autonomy-level-out-of-range.json",
+      "schema_valid": false,
+      "note": "Autonomy level is bounded at 3."
+    },
+    {
+      "id": "autonomy-level-not-integer",
+      "file": "cases/autonomy-level-not-integer.json",
+      "schema_valid": false,
+      "note": "Autonomy level is an integer."
+    },
+    {
+      "id": "risk-level-not-in-enum",
+      "file": "cases/risk-level-not-in-enum.json",
+      "schema_valid": false,
+      "note": "risk_profile.level is a closed enum of low, medium and high."
+    },
+    {
+      "id": "owner-type-not-in-enum",
+      "file": "cases/owner-type-not-in-enum.json",
+      "schema_valid": false,
+      "note": "owner.type is a closed enum of individual, organization and system."
+    },
+    {
+      "id": "logging-not-in-enum",
+      "file": "cases/logging-not-in-enum.json",
+      "schema_valid": false,
+      "note": "audit_surface.logging is a closed enum of none, basic and detailed."
+    },
+    {
+      "id": "forbidden-actions-empty",
+      "file": "cases/forbidden-actions-empty.json",
+      "schema_valid": false,
+      "note": "forbidden_actions requires at least one member: an empty negative scope is not a declared negative scope."
+    },
+    {
+      "id": "contact-email-not-an-email",
+      "file": "cases/contact-email-not-an-email.json",
+      "schema_valid": false,
+      "note": "contact.email carries format: email, so a format-aware validator rejects this."
+    },
+    {
+      "id": "purpose-code-uppercase",
+      "file": "cases/purpose-code-uppercase.json",
+      "schema_valid": false,
+      "note": "purpose.primary_code must match ^[a-z0-9._-]+$."
+    },
+    {
+      "id": "purpose-description-too-short",
+      "file": "cases/purpose-description-too-short.json",
+      "schema_valid": false,
+      "note": "purpose.description has a minimum length of 10."
+    },
+    {
+      "id": "stopping-missing-mechanism",
+      "file": "cases/stopping-missing-mechanism.json",
+      "schema_valid": false,
+      "note": "stopping_authority requires both stoppable_by and mechanism."
+    },
+    {
+      "id": "stopping-empty-stoppable-by",
+      "file": "cases/stopping-empty-stoppable-by.json",
+      "schema_valid": false,
+      "note": "stoppable_by requires at least one member."
+    },
+    {
+      "id": "document-is-an-array",
+      "file": "cases/document-is-an-array.json",
+      "schema_valid": false,
+      "note": "The manifest is an object; an array is not one."
+    },
+    {
+      "id": "document-is-a-string",
+      "file": "cases/document-is-a-string.json",
+      "schema_valid": false,
+      "note": "A JSON string is not a manifest."
+    }
+  ]
+}

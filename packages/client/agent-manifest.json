@@ -1,0 +1,51 @@
+{
+  "$schema": "https://agent-manifest-spec.org/spec/v1.0/schema.json",
+  "manifest_version": "1.0",
+  "agent_id": "agent-manifest-client",
+  "agent_name": "Agent Manifest Client",
+  "agent_version": "0.1.0",
+  "owner": {
+    "type": "organization",
+    "identifier": "Agent Manifest Project"
+  },
+  "purpose": {
+    "primary_code": "manifest.reading",
+    "description": "Reads Agent Manifest v1.0 declarations: parses them, puts them in canonical form, fingerprints them, compares two of them, and checks their structure against the published schema. It does not execute, score, certify or enforce anything, including itself."
+  },
+  "capabilities": [
+    "manifest-parsing",
+    "canonical-serialisation",
+    "structural-validation"
+  ],
+  "forbidden_actions": [
+    "no-agent-execution",
+    "no-autonomous-decision-making",
+    "no-policy-evaluation",
+    "no-telemetry",
+    "no-writing-to-any-registry"
+  ],
+  "autonomy": {
+    "level": 0
+  },
+  "risk_profile": {
+    "level": "low",
+    "notes": "A library invoked by a caller. It takes no action of its own, reaches no network from its reading layer, and returns values rather than decisions."
+  },
+  "data_handling": {
+    "stores_personal_data": false,
+    "retention": "none"
+  },
+  "stopping_authority": {
+    "stoppable_by": ["the calling application", "project maintainer"],
+    "mechanism": "The caller stops it by not calling it; the dependency can be removed or pinned at any version. The maintainer can deprecate or unpublish the package."
+  },
+  "audit_surface": {
+    "logging": "none",
+    "reconstructability": "none",
+    "notes": "It writes no log of its own. What a caller observes is the value it returned to that caller."
+  },
+  "contact": {
+    "email": "contact@agent-manifest-spec.org"
+  },
+  "declaration_date": "2026-08-01"
+}

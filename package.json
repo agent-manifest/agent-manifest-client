@@ -1,0 +1,19 @@
+{
+  "name": "agent-manifest-client-workspace",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Workspace for @agent-manifest/schema and @agent-manifest/client. Not published.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "workspaces": [
+    "packages/schema",
+    "packages/client"
+  ],
+  "scripts": {
+    "test": "node --test \"packages/client/test/**/*.test.js\"",
+    "check:packages": "npm pack --dry-run --workspaces"
+  }
+}

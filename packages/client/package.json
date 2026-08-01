@@ -1,0 +1,67 @@
+{
+  "name": "@agent-manifest/client",
+  "version": "0.1.0",
+  "description": "Reading client for Agent Manifest v1.0 declarations. Parses, canonicalises, fingerprints, compares and structurally validates manifests. It reports where a document came from and what cannot be concluded from it; it does not score, rank, certify or enforce anything.",
+  "keywords": [
+    "agent-manifest",
+    "agent-manifest-spec",
+    "agent-declaration",
+    "structural-validation",
+    "json-schema",
+    "canonicalization",
+    "rfc8785"
+  ],
+  "homepage": "https://agent-manifest-spec.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agent-manifest/agent-manifest-client.git",
+    "directory": "packages/client"
+  },
+  "bugs": {
+    "url": "https://github.com/agent-manifest/agent-manifest-client/issues"
+  },
+  "author": {
+    "name": "Hernán Alfredo Capucci",
+    "url": "https://orcid.org/0009-0008-7216-3032"
+  },
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": "./src/index.js",
+    "./validate": "./src/validate.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "src",
+    "agent-manifest.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "dependencies": {
+    "@agent-manifest/schema": "0.1.0",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  },
+  "not_goals": [
+    "It does not score, rank, grade or order manifests.",
+    "It does not emit verdicts about trust, safety or compliance.",
+    "It does not evaluate policy. The policy seat belongs to the consumer and is left deliberately empty.",
+    "It does not verify behaviour, and never uses the word verify for a structural result.",
+    "It does not certify, accredit or issue badges.",
+    "It does not sign anything or check signatures.",
+    "It does not write to any registry or remote surface.",
+    "It sends no telemetry, not even anonymous.",
+    "It does not fill in defaults or repair manifests.",
+    "It ships no thresholds, profiles or recommended lists.",
+    "It performs no network access outside the explicitly named access layer."
+  ]
+}

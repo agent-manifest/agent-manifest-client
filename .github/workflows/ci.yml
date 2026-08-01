@@ -1,0 +1,125 @@
+name: CI
+
+# Read-only verification. This workflow never writes to the repository and never
+# publishes anything.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test (node ${{ matrix.node }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - run: npm ci
+      - run: npm test
+
+  doctrine:
+    name: anti-enforcement checks
+    runs-on: ubuntu-latest
+    # These are the mechanical form of the promises in the README. They are a
+    # separate job so that a failure is legible as what it is — a change to what
+    # this package is allowed to do — rather than as one red test among many.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+
+      - name: Vocabulary blocking — no verdict word may reach the public surface
+        run: node --test packages/client/test/vocabulary.test.js
+
+      - name: Negative assertions — the eleven prohibitions
+        run: node --test packages/client/test/doctrine.test.js
+
+      - name: Layering — the pure entry point reaches no network and no dependency
+        run: node --test packages/client/test/layering.test.js
+
+      - name: Conformance corpus
+        run: node --test packages/client/test/corpus.test.js
+
+  schema-parity:
+    name: schema parity with the frozen specification
+    runs-on: ubuntu-latest
+    # The schema in this repository is a byte-for-byte copy of the canonical
+    # file. Agent Manifest v1.0 is frozen, so a mismatch is drift and is an
+    # incident, not a signal to re-vendor.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - name: Compare the vendored schema against the published canonical one
+        run: |
+          set -euo pipefail
+          recorded=$(python3 -c "import json;print(json.load(open('packages/schema/SOURCE.json'))['sha256'])")
+          canonical_url=$(python3 -c "import json;print(json.load(open('packages/schema/SOURCE.json'))['canonical_url'])")
+          local_sum=$(sha256sum packages/schema/v1.0/schema.json | cut -d' ' -f1)
+          curl -sSfL "$canonical_url" -o /tmp/canonical.json
+          published_sum=$(sha256sum /tmp/canonical.json | cut -d' ' -f1)
+          echo "recorded:  $recorded"
+          echo "vendored:  $local_sum"
+          echo "published: $published_sum"
+          test "$local_sum" = "$recorded"
+          test "$published_sum" = "$recorded"
+
+  package:
+    name: package contents
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - name: Build both tarballs and record their contents
+        run: |
+          set -euo pipefail
+          npm pack --workspaces
+          for tarball in ./*.tgz; do
+            echo "--- $tarball"
+            tar -tzf "$tarball" | sort
+            sha256sum "$tarball"
+          done
+      - name: Reject internal material in the tarballs
+        run: |
+          set -euo pipefail
+          for tarball in ./*.tgz; do
+            contents=$(tar -tzf "$tarball")
+            for forbidden in test/ .github/ node_modules/ .DS_Store; do
+              if printf '%s\n' "$contents" | grep -q "^package/$forbidden"; then
+                echo "$tarball contains $forbidden"; exit 1
+              fi
+            done
+          done
+
+  audit:
+    name: dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: npm audit --audit-level=moderate

@@ -1,0 +1,51 @@
+{
+  "name": "@agent-manifest/schema",
+  "version": "0.1.0",
+  "description": "The Agent Manifest v1.0 JSON Schema and its conformance corpus, distributed as data. No code, no runtime dependencies. The schema file is dedicated to the public domain under CC0 1.0 so it can be embedded without attribution obligations.",
+  "keywords": [
+    "agent-manifest",
+    "agent-manifest-spec",
+    "json-schema",
+    "conformance-corpus",
+    "schema"
+  ],
+  "homepage": "https://agent-manifest-spec.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agent-manifest/agent-manifest-client.git",
+    "directory": "packages/schema"
+  },
+  "bugs": {
+    "url": "https://github.com/agent-manifest/agent-manifest-client/issues"
+  },
+  "author": {
+    "name": "Hernán Alfredo Capucci",
+    "url": "https://orcid.org/0009-0008-7216-3032"
+  },
+  "license": "CC0-1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "exports": {
+    ".": "./index.js",
+    "./v1.0/schema.json": "./v1.0/schema.json",
+    "./corpus/index.json": "./corpus/index.json",
+    "./corpus/*": "./corpus/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "v1.0",
+    "corpus",
+    "SOURCE.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}
