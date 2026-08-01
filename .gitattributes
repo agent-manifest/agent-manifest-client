@@ -1,0 +1,11 @@
+# Everything is normalised to LF in the repository and in the tarball, so a
+# package is identical whichever platform it was packed on.
+* text=auto eol=lf
+
+# The schema and the corpus are data with recorded checksums, not source. Git
+# must never rewrite their bytes: on a Windows checkout with core.autocrlf=true
+# the schema would stop matching the sha-256 in SOURCE.json and could be
+# published in that state. The last matching pattern wins, so these come after
+# the rule above on purpose.
+packages/schema/v1.0/schema.json -text
+packages/schema/corpus/**         -text
