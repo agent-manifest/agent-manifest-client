@@ -17,6 +17,18 @@ name: Release
 #   - an explicit `confirm: publish` input at dispatch time;
 #   - the sha-256 of the approved tarball, typed at dispatch time.
 #
+# The second of those cannot be satisfied for a name that is not in the
+# registry yet: npm keeps the setting on the package's own page, and the page
+# does not exist until the package does. The earliest version of a new name is
+# therefore published by hand, once — a bootstrap publication. It reserves the
+# name and makes the trusted publisher configurable, and that is all it is: it
+# goes out under a dist-tag other than `latest`, it is deprecated in favour of
+# the release that follows it, it cannot happen again for that name once
+# trusted publishing is configured, and no credential is created in or read by
+# this repository for it. Every version meant to be installed and used comes
+# through this workflow, with provenance. See STEWARDSHIP.md section 3 in the
+# `agent-manifest` repository, where the same limits are stated in public.
+#
 # Authentication is OpenID Connect (npm trusted publishing). There is no npm
 # token in this repository and none is read here. Provenance is attested by npm
 # from the OIDC claim, so the published package is traceable to this commit.
@@ -126,6 +138,22 @@ jobs:
           required=$(python3 -c "import json;print(json.load(open('packages/client/package.json'))['dependencies']['@agent-manifest/schema'])")
           echo "client requires @agent-manifest/schema@$required"
           npm view "@agent-manifest/schema@$required" version
+
+      # A bootstrap publication is a hand act that happens once per name, before
+      # trusted publishing can be configured. This workflow is the other thing —
+      # the releases — and it says so mechanically rather than in a comment, so
+      # that the two can never be confused from the dispatch form.
+      - name: Refuse to publish a bootstrap version through the release workflow
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.value }}"
+          if [ "${{ inputs.tag }}" = "bootstrap" ]; then
+            echo "The bootstrap dist-tag is not published from here."
+            exit 1
+          fi
+          case "$version" in
+            *-*) echo "Refusing a prerelease version: $version"; exit 1 ;;
+          esac
 
       - name: Check that the tag matches the version being published
         run: |
