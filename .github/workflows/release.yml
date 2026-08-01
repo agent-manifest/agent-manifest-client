@@ -118,12 +118,16 @@ jobs:
           test "$local_sum" = "$recorded"
           test "$published_sum" = "$recorded"
 
+      # Read the file rather than ask npm for it. `npm pkg get` writes its
+      # warnings to the same stream as its answer, and setup-node leaves an
+      # .npmrc here that npm warns about, so the answer arrives with a line of
+      # prose in front of it and nothing downstream can parse it.
       - name: Read the version being published
         id: version
         run: |
           set -euo pipefail
-          version=$(npm pkg get version -w "${{ inputs.package }}" \
-            | python3 -c "import json,sys;print(next(iter(json.load(sys.stdin).values())))")
+          short=$(printf '%s' "${{ inputs.package }}" | cut -d/ -f2)
+          version=$(python3 -c "import json;print(json.load(open('packages/$short/package.json'))['version'])")
           echo "value=$version" >> "$GITHUB_OUTPUT"
           echo "Publishing ${{ inputs.package }}@$version"
 
