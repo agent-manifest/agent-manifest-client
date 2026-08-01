@@ -19,7 +19,7 @@ import { fileURLToPath } from 'node:url';
  */
 const FORBIDDEN = /trust|score|rank|grade|certif|approve|enforce|allow|deny|safe|compliant|verify/i;
 
-const ENTRY_POINTS = ['../src/index.js', '../src/validate.js'];
+const ENTRY_POINTS = ['../src/index.js', '../src/validate.js', '../src/net/index.js'];
 
 /** Collect identifiers from an exported value, to a bounded depth. */
 function collect(value, into, depth = 0) {

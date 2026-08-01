@@ -60,6 +60,61 @@ lossless: same document, one agreed way of writing it. Naming the scheme is what
 makes a fingerprint computed here comparable to one computed by an
 implementation in another language.
 
+## Find one on the network
+
+The access layer is a separate entry point, so a network request is visible in
+an import line rather than buried in a call stack.
+
+```js
+import { discover, discoverRegistry, resolve } from '@agent-manifest/client/net';
+
+// A host, at the location the specification prescribes. One request.
+await discover('example.com');
+
+// By agent_id, against a registry index you named. Two requests.
+const { registryUrl, registryVersion } = await discoverRegistry('agent-manifest-spec.org');
+const { resolutions, absence } = await resolve('the-diplomat', { registryUrl });
+```
+
+Each resolution says where it came from and what that is worth:
+
+```js
+{
+  document,                     // exactly as served
+  schemaValid, errors,
+  source:  'https://…/the-diplomat.json',
+  route:   'registry-index',    // how it was found
+  binding: 'registry-indexed',  // what it is attached to
+  retrievedAt,
+  caveats                       // what you still cannot conclude
+}
+```
+
+`binding` never takes the value `verified`, `trusted` or `authentic`. No such
+state exists in this ecosystem, and offering the word would invite its use.
+
+Three behaviours are deliberate and will not change:
+
+**Resolving an id returns zero, one or several resolutions.** Nothing here
+declares `agent_id` unique — no namespace, no issuing authority — so a function
+that returned *the* entry would promise a uniqueness the data cannot support.
+
+**No registry is chosen for you.** `resolve` by id needs a `registryUrl` you
+named. Picking one on your behalf is picking whose word you take.
+
+**Nothing is retried and nothing falls back.** A read that fails returns an
+`absence` with a reason you can branch on — `no-document-at-well-known`,
+`host-did-not-respond`, `not-in-registry-index`, `unknown-registry-version`,
+`unparseable-json` and so on. With five manifests in the world, absence is the
+common case, and a generic failure is what makes an integrator stop after ten
+minutes.
+
+That last reason is worth spelling out. The registry discovery document
+declares its own `registry_version`, and its field names are stable only while
+that number is unchanged. So a version this package does not know is treated as
+a document it cannot parse — the fields are not read hopefully by name, because
+the contract that gave those names meaning is exactly what changed.
+
 ## What you cannot conclude
 
 ```js

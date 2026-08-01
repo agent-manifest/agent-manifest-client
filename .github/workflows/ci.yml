@@ -58,6 +58,21 @@ jobs:
       - name: Conformance corpus
         run: node --test packages/client/test/corpus.test.js
 
+  live:
+    name: access layer against what is actually served
+    runs-on: ubuntu-latest
+    # The recorded-fetch tests can only confirm that the code agrees with a
+    # fixture somebody wrote. These point the same code at the real discovery
+    # document and the real registry index, which is the only way to know that
+    # the published field-name contract can be kept by code.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci
+      - run: node --test packages/client/test/live.test.js
+
   schema-parity:
     name: schema parity with the frozen specification
     runs-on: ubuntu-latest

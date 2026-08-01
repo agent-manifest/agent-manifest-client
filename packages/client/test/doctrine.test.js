@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import * as pure from '../src/index.js';
 import * as validation from '../src/validate.js';
+import * as access from '../src/net/index.js';
 import { validate } from '../src/validate.js';
 
 /**
@@ -18,7 +19,7 @@ import { validate } from '../src/validate.js';
  * "we do not do that".
  */
 
-const surface = { ...pure, ...validation };
+const surface = { ...pure, ...validation, ...access };
 const names = Object.keys(surface);
 
 test('N-1 · nothing scores, grades, ranks or orders', () => {
@@ -110,7 +111,8 @@ test('N-10 · no threshold, profile or recommended list ships with the package',
 test('N-11 · the pure layer performs no network access', () => {
   // Enforced structurally in layering.test.js. Asserted here too, because this
   // is the file someone reads when they want to know what is forbidden.
-  assert.ok(!names.some((n) => /fetch|http|request|download/i.test(n)));
+  assert.ok(!Object.keys(pure).some((n) => /fetch|http|request|download/i.test(n)));
+  assert.ok(!Object.keys(validation).some((n) => /fetch|http|request|download/i.test(n)));
 });
 
 test('caveats cannot be switched off through any option', () => {

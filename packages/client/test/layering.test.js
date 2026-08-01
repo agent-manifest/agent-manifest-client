@@ -67,6 +67,24 @@ test('the pure entry point reaches no network, no filesystem, no clock and no de
   }
 });
 
+test('exactly one file in the whole package performs a network request', async () => {
+  // Other files under net/ pass a fetch implementation through for testing, but
+  // only this one resolves and calls it. One file to audit, not five.
+  const performers = [];
+  const mentions = [];
+  for (const file of await sourceFiles()) {
+    const text = await read(file);
+    if (/globalThis\.fetch/.test(text)) performers.push(file);
+    if (/\bfetch\b/.test(text)) mentions.push(file);
+  }
+  assert.deepEqual(performers, ['net/http.js'], 'the network is reached from exactly one file');
+  assert.deepEqual(
+    mentions.filter((file) => !file.startsWith('net/')),
+    [],
+    'nothing outside the access layer mentions the network at all',
+  );
+});
+
 test('the validator is the only place a runtime dependency appears', async () => {
   const { externals } = await reachableFrom('validate.js');
   assert.deepEqual(
@@ -94,7 +112,7 @@ test('no source file imports or defines a policy layer', async () => {
 
 test('every source file is reachable from a declared entry point', async () => {
   // An unreachable file is either dead code or a back door around the layering.
-  const declared = ['index.js', 'validate.js'];
+  const declared = ['index.js', 'validate.js', 'net/index.js'];
   const reachable = new Set();
   for (const entry of declared) {
     for (const file of (await reachableFrom(entry)).files) reachable.add(file);
