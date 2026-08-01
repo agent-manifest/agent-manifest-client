@@ -143,12 +143,23 @@ jobs:
       # trusted publishing can be configured. This workflow is the other thing —
       # the releases — and it says so mechanically rather than in a comment, so
       # that the two can never be confused from the dispatch form.
+      #
+      # What makes a publication a bootstrap is the procedure it went through
+      # and what the registry recorded about it, not the number it carries. The
+      # dist-tag check below is therefore the one that matters. The version
+      # check is a second, narrower guard: `0.0.0` is the number the bootstrap
+      # of this workspace was published under, and no release should ever
+      # reoccupy it.
       - name: Refuse to publish a bootstrap version through the release workflow
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.value }}"
           if [ "${{ inputs.tag }}" = "bootstrap" ]; then
             echo "The bootstrap dist-tag is not published from here."
+            exit 1
+          fi
+          if [ "$version" = "0.0.0" ]; then
+            echo "0.0.0 is the bootstrap version and is published by hand, once."
             exit 1
           fi
           case "$version" in
