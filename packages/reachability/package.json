@@ -19,6 +19,6 @@
     "report": "node bin/reachability.js"
   },
   "dependencies": {
-    "@agent-manifest/client": "0.1.0"
+    "@agent-manifest/client": "0.1.1"
   }
 }

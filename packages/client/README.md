@@ -37,6 +37,22 @@ const { schemaValid, errors } = validate(document);
 // errors: [{ path: '/data_handling/retention', message: 'must match pattern …' }]
 ```
 
+`validate()` takes the document. `parse()` returns `{ document, form }`, so the
+two go together like this:
+
+```js
+const { document } = parse(readFileSync('manifest.json', 'utf8'));
+const { schemaValid, errors } = validate(document);
+```
+
+Passing the whole `parse()` result instead is refused with a single error
+carrying `source: 'usage'`, which is the only error that ever carries it —
+errors about the document keep the `{ path, message }` shape above. The refusal
+exists because the alternative was worse than useless: the wrapper has none of
+the required fields, so a perfectly good manifest came back described as broken
+in thirteen places, and the reader went looking for a defect that was in their
+call all along. Nothing is unwrapped or repaired on your behalf.
+
 The boolean is called `schemaValid` and not `valid`, and that is not fussiness.
 `valid` gets read as *the agent is fine*. What the schema constrains is the
 shape of a declaration; whether the declaration is true, complete, or worth

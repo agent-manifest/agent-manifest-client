@@ -3,7 +3,7 @@
   "manifest_version": "1.0",
   "agent_id": "agent-manifest-client",
   "agent_name": "Agent Manifest Client",
-  "agent_version": "0.1.0",
+  "agent_version": "0.1.1",
   "owner": {
     "type": "organization",
     "identifier": "Agent Manifest Project"

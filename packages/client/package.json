@@ -1,6 +1,6 @@
 {
   "name": "@agent-manifest/client",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reading client for Agent Manifest v1.0 declarations. Parses, canonicalises, fingerprints, compares and structurally validates manifests. It reports where a document came from and what cannot be concluded from it; it does not score, rank, certify or enforce anything.",
   "keywords": [
     "agent-manifest",
