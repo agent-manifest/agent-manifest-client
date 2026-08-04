@@ -210,7 +210,36 @@ jobs:
           cd "$dir"
           npm init -y >/dev/null
           npm pkg set type=module >/dev/null
-          npm install "${{ inputs.package }}@$version"
+
+          # The registry is not read-your-writes: a package that was just
+          # published can be missing from the read path for a few seconds. That
+          # is a propagation delay, not a failed publish, and reporting the two
+          # the same way is how a green release gets recorded as a red one.
+          # Only ETARGET is retried; anything else stops immediately.
+          attempts=6
+          delay=10
+          installed=no
+          for i in $(seq 1 "$attempts"); do
+            if out=$(npm install "${{ inputs.package }}@$version" 2>&1); then
+              installed=yes
+              break
+            fi
+            if printf '%s' "$out" | grep -qE 'ETARGET|notarget|No matching version found'; then
+              echo "attempt $i/$attempts: ${{ inputs.package }}@$version not visible yet; waiting ${delay}s"
+              sleep "$delay"
+              continue
+            fi
+            echo "$out"
+            echo "npm install failed for a reason other than propagation. Nothing to retry."
+            exit 1
+          done
+          if [ "$installed" != yes ]; then
+            echo "$out"
+            echo "PUBLISHED BUT NOT INSTALLABLE within $((attempts * delay))s."
+            echo "This is a propagation timeout, not a failed publish:"
+            echo "${{ inputs.package }}@$version is in the registry and must not be republished."
+            exit 1
+          fi
           if [ "${{ inputs.package }}" = "@agent-manifest/schema" ]; then
             node -e "
               import('@agent-manifest/schema').then(async (m) => {
