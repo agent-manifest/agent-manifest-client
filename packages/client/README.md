@@ -90,6 +90,15 @@ await discover('example.com');
 // By agent_id, against a registry index you named. Two requests.
 const { registryUrl, registryVersion } = await discoverRegistry('agent-manifest-spec.org');
 const { resolutions, absence } = await resolve('the-diplomat', { registryUrl });
+
+// resolutions is always an array; check absence before indexing
+if (absence !== null) {
+  // agent not in registry — absence.reason says why ('not-in-registry-index', etc.)
+} else {
+  for (const { document, schemaValid, caveats } of resolutions) {
+    // use document
+  }
+}
 ```
 
 Each resolution says where it came from and what that is worth:
