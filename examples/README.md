@@ -34,20 +34,31 @@ edited. `@agent-manifest/client` ships no thresholds, no profiles and no
 recommended lists: it reads the declaration and holds no opinion. **The policy
 belongs to the consumer**, and that is not a gap to be filled in later.
 
-## What is declared is used to restrict, never to grant
+## What is declared can only narrow an independent baseline
 
-All four examples use the manifest **to take away**: refuse a run, block a call,
-narrow a tool list, confine a process.
+All four examples start from a consumer baseline established without trusting
+the manifest. The declaration is then allowed only to **take away** from that
+baseline: refuse a run, block a call, narrow a tool list, or add confinement.
 
-That is deliberate, and it is the limit of the format. A manifest is not signed
-and proves nothing about who issued it, so **using it to grant privileges or to
-extend trust is not a use these examples endorse**. Used in the restrictive
-direction the missing signature stops mattering: lying in your own declaration
-can only be turned into a shorter leash for yourself.
+Conceptually:
+
+```text
+effective authority = independently established authority ∩ manifest-derived restrictions
+```
+
+That intersection is a model, not Agent Manifest syntax. Its purpose here is to
+make the direction explicit: nothing in a manifest can add a privilege, identify
+a caller, or relax a control the consumer already requires.
+
+A false or incomplete declaration can still evade a restriction that exists
+*only because the consumer chose to derive it from the declaration*. It then
+falls back to the independently established baseline. That is why the baseline
+must be safe on its own and why an unsigned manifest must not be the sole
+security boundary.
 
 None of these examples authenticates an agent, treats a manifest as a
-credential, applies official enforcement, or issues badges, seals or
-certifications of any kind.
+credential, proves that a declaration is true, applies official enforcement, or
+issues badges, seals or certifications of any kind.
 
 ## Requirements
 
