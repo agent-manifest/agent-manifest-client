@@ -1,20 +1,27 @@
 // Archetype 2 — gateway / restrictive execution branch.
 //
 // The decision that already exists: a gateway forwards or refuses a tool call.
-// Today that decision comes from an allow/deny list written in the gateway's own
-// configuration.
+// The gateway has an independently established baseline allow-list. The
+// manifest is applied only after that baseline and can remove permissions from
+// it; it cannot add an action the baseline did not already allow.
 //
-// Here the list comes from `forbidden_actions` in the manifest of the agent
-// making the call. Restrictive use: what is declared can only TAKE permissions
-// away. An agent that lies by declaring fewer prohibitions gains nothing against
-// the operator's own policy, which still exists and is still the one in charge.
-// This does not authenticate the agent or treat the manifest as a credential.
+// A false or incomplete forbidden_actions list can therefore evade only a
+// manifest-derived self-restriction. It cannot exceed the gateway's own
+// baseline. This example does not authenticate the agent or treat the manifest
+// as a credential.
 
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { parse } from '@agent-manifest/client';
 
 const upstreamHits = [];
+
+// --- independently established consumer baseline -------------------------
+const BASELINE_ALLOWED_ACTIONS = new Set([
+  'no-payment-execution',
+  'read-invoices',
+]);
+// ------------------------------------------------------------------------
 
 function forbids(manifest, action) {
   return (manifest.forbidden_actions || []).includes(action);
@@ -26,6 +33,12 @@ export function startGateway(manifest) {
     req.on('data', (c) => (body += c));
     req.on('end', () => {
       const { action } = JSON.parse(body || '{}');
+
+      if (!BASELINE_ALLOWED_ACTIONS.has(action)) {
+        res.writeHead(403, { 'content-type': 'application/json' });
+        res.end(JSON.stringify({ blocked: action, by: 'consumer_policy' }));
+        return;
+      }
 
       if (forbids(manifest, action)) {
         res.writeHead(403, { 'content-type': 'application/json' });
