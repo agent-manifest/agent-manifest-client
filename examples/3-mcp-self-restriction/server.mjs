@@ -1,39 +1,55 @@
 // Archetype 3 — MCP server. AN EXPLICIT DERIVATION of archetype 2.
 //
-// This is not an independent case and is not presented as one. No native case
-// was found for this archetype: the only one that landed here was authenticating
-// the caller, and it fell because a manifest is not a credential.
+// This is not an independent case and is not presented as one. The server does
+// not use the manifest to learn WHO is calling — it cannot, and it does not try.
 //
-// The derivation works by inverting who benefits from lying. The server does not
-// use the manifest to learn WHO is calling — it cannot, and it does not try. It
-// applies the restriction THE CALLER DECLARED ABOUT ITSELF. Falsifying that
-// declaration gains nothing: it can only be used to remove your own tools, never
-// to obtain them.
+// The server starts from an independently established baseline tool set. The
+// caller's forbidden_actions can only remove tools from that set. Omitting a
+// prohibition can restore at most the server's baseline; it can never add a
+// tool the server did not already authorize.
 //
 // A real MCP server would receive this document over whatever channel it already
-// has. How it arrives is not part of the example, and the example does not solve it.
+// has. How it arrives, who issued it, and whether the claims are true are
+// separate concerns and are not solved by this example.
 
 import { readFileSync } from 'node:fs';
 import { parse } from '@agent-manifest/client';
 
-const TOOLS = [
+// --- independently established server baseline ---------------------------
+const BASELINE_TOOLS = [
   { name: 'no-payment-execution', description: 'Issues a payment.' },
   { name: 'no-vendor-record-changes', description: 'Edits a vendor record.' },
   { name: 'read-invoices', description: 'Reads invoices.' },
 ];
+// ------------------------------------------------------------------------
 
-// tools/list — the advertised list is narrowed by what the caller forbade itself.
+// tools/list — the baseline list is narrowed by what the caller forbade itself.
 export function listTools(manifest) {
   const forbidden = new Set(manifest.forbidden_actions || []);
-  return TOOLS.filter((t) => !forbidden.has(t.name));
+  return BASELINE_TOOLS.filter((t) => !forbidden.has(t.name));
 }
 
-// tools/call — and if it is called anyway, it is refused without running.
+// tools/call — baseline authorization is checked first, then the declaration
+// may add a further refusal.
 export function callTool(manifest, name) {
+  const baselineTool = BASELINE_TOOLS.find((t) => t.name === name);
+  if (!baselineTool) {
+    return {
+      isError: true,
+      executed: false,
+      content: [{ type: 'text', text: `'${name}' is not authorized by the server baseline.` }],
+    };
+  }
+
   const forbidden = new Set(manifest.forbidden_actions || []);
   if (forbidden.has(name)) {
-    return { isError: true, executed: false, content: [{ type: 'text', text: `'${name}' is in the caller's own forbidden_actions.` }] };
+    return {
+      isError: true,
+      executed: false,
+      content: [{ type: 'text', text: `'${name}' is in the caller's own forbidden_actions.` }],
+    };
   }
+
   return { isError: false, executed: true, content: [{ type: 'text', text: `'${name}' executed.` }] };
 }
 
