@@ -1,15 +1,17 @@
 // Archetype 1 — CI gate.
 //
-// The decision that already exists: a CI run passes or fails on declared
-// metadata. Today that decision is made by a workflow step calling `exit 1`,
-// governed by a policy written by hand in the pipeline itself.
+// The decision that already exists: a CI run passes or fails. The consumer must
+// first establish an acceptable baseline independently of the manifest — for
+// example through repository policy, authenticated identity, provenance, or
+// another admission control.
 //
-// The only thing that changes here is WHERE the value feeding that policy comes
-// from. The policy stays with the consumer: this file ships no recommended
-// threshold, and the one below is an example meant to be edited.
+// The manifest may only narrow that baseline. A declaration can make this run
+// fail; it can never turn a baseline denial into an approval. If the declaration
+// is false or incomplete, it may evade only the extra restriction derived from
+// the declaration, so the baseline must be safe on its own.
 //
-// Restrictive use: what is declared can only REJECT the declarer's own run. It
-// grants nothing, authenticates no one, and treats no manifest as a credential.
+// This example does not authenticate the agent or treat the manifest as a
+// credential.
 
 import { readFileSync } from 'node:fs';
 import { parse } from '@agent-manifest/client';
@@ -24,8 +26,13 @@ if (!path) {
 // parse() returns { document, form }, not the document itself.
 const { document: manifest } = parse(readFileSync(path, 'utf8'));
 
-// --- consumer policy, meant to be edited --------------------------------
-const MAX_AUTONOMY = 2;
+// --- independently established consumer baseline -------------------------
+// Stand-in for a decision made without trusting this manifest.
+const BASELINE_RUN_ALLOWED = true;
+// ------------------------------------------------------------------------
+
+// --- manifest-derived restriction, meant to be edited --------------------
+const MAX_DECLARED_AUTONOMY = 2;
 // ------------------------------------------------------------------------
 
 const { schemaValid, errors } = validate(manifest);
@@ -34,11 +41,20 @@ if (!schemaValid) {
   process.exit(1);
 }
 
-const level = manifest.autonomy.level;
-if (level > MAX_AUTONOMY) {
-  console.error(`REJECTED: declared autonomy.level ${level}, the maximum accepted here is ${MAX_AUTONOMY}.`);
+if (!BASELINE_RUN_ALLOWED) {
+  console.error('REJECTED: independent consumer policy denies this run.');
   process.exit(1);
 }
 
-console.log(`ACCEPTED: declared autonomy.level ${level} (maximum ${MAX_AUTONOMY}).`);
+const level = manifest.autonomy.level;
+if (level > MAX_DECLARED_AUTONOMY) {
+  console.error(
+    `REJECTED: declared autonomy.level ${level} adds a restriction above the accepted declaration threshold ${MAX_DECLARED_AUTONOMY}.`
+  );
+  process.exit(1);
+}
+
+console.log(
+  `ACCEPTED: independent baseline allows the run and the declaration adds no further rejection (autonomy.level=${level}).`
+);
 process.exit(0);
